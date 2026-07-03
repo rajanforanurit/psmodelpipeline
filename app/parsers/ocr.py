@@ -1,13 +1,11 @@
 import numpy as np
-from paddleocr import PaddleOCR
-
 from app.utils.logging_config import get_logger
-
 logger = get_logger(__name__)
-
 
 class OCREngine:
     def __init__(self, language: str, use_gpu: bool) -> None:
+        from paddleocr import PaddleOCR
+
         self._engine = PaddleOCR(use_angle_cls=True, lang=language, use_gpu=use_gpu, show_log=False)
 
     def extract_text(self, image: np.ndarray) -> str:
