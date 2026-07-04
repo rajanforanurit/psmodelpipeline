@@ -162,7 +162,7 @@ app = FastAPI(title=constants.APP_NAME, version=constants.APP_VERSION, lifespan=
 async def health() -> dict:
     return {
         "server": "running",
-        "operation":"768 vector dims, BAAI/bge-base-en-v1.5"
+        "operation": "768 dim, BAAI/bge-base-en-v1.5, In-built ML Model",
         "pipeline_ready": app.state.pipeline_ready,
         "pipeline_error": app.state.pipeline_error,
         "uptime_seconds": round(time.monotonic() - APP_START_TIME, 2),
