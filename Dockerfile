@@ -15,7 +15,6 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN uv pip install --system --no-cache -r requirements.txt
 RUN python3 -c "from fastembed import TextEmbedding; TextEmbedding(model_name='BAAI/bge-base-en-v1.5')"
-RUN python3 -c "from paddleocr import PaddleOCR; PaddleOCR(use_angle_cls=True, lang='en', use_gpu=False, show_log=False)"
 COPY app ./app
 RUN mkdir -p /app/data /app/logs
 EXPOSE 8080
