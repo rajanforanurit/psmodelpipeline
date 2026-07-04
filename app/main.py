@@ -38,7 +38,6 @@ def build_orchestrator() -> PipelineOrchestrator:
         folder_id=settings.google_drive_folder_id,
         page_size=constants.GOOGLE_DRIVE_POLL_PAGE_SIZE,
     )
-    change_detector = ChangeDetector(constants.STATE_STORE_PATH)
     logger.info("google_drive_initialized")
 
     logger.info("connecting_to_qdrant")
@@ -50,12 +49,15 @@ def build_orchestrator() -> PipelineOrchestrator:
         knowledge_base_name=constants.QDRANT_KNOWLEDGE_BASE_COLLECTION,
         question_bank_name=constants.QDRANT_QUESTION_BANK_COLLECTION,
         generated_questions_name=constants.QDRANT_GENERATED_QUESTIONS_COLLECTION,
+        pipeline_state_name=constants.QDRANT_PIPELINE_STATE_COLLECTION,
         vector_size=constants.QDRANT_VECTOR_SIZE,
         distance_name=constants.QDRANT_DISTANCE,
     )
     ensure_collections(qdrant_client, specs)
     repository = VectorRepository(qdrant_client, constants.QDRANT_UPSERT_BATCH_SIZE)
     logger.info("qdrant_collections_ready")
+
+    change_detector = ChangeDetector(qdrant_client, constants.QDRANT_PIPELINE_STATE_COLLECTION)
 
     logger.info("loading_embedding_model", model=constants.EMBEDDING_MODEL_NAME)
     embedder = BGEEmbedder(
@@ -162,7 +164,6 @@ app = FastAPI(title=constants.APP_NAME, version=constants.APP_VERSION, lifespan=
 async def health() -> dict:
     return {
         "server": "running",
-        "operation": "768 dim, BAAI/bge-base-en-v1.5, In-built ML Model",
         "pipeline_ready": app.state.pipeline_ready,
         "pipeline_error": app.state.pipeline_error,
         "uptime_seconds": round(time.monotonic() - APP_START_TIME, 2),
