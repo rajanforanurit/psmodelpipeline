@@ -1,62 +1,53 @@
 name: Build and Deploy to Azure Container Apps
-
 on:
   push:
     branches:
       - main
   workflow_dispatch:
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     permissions:
       id-token: write
       contents: read
-
     env:
       ACR_NAME: psmodelpipeline
       ACR_LOGIN_SERVER: psmodelpipeline.azurecr.io
       IMAGE_NAME: psmodelpipeline
       CONTAINER_APP_NAME: psmodelpipeline
       RESOURCE_GROUP: Anurit_RG
-
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
-
       - name: Azure Login
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.PSMODELPIPELINE_AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.PSMODELPIPELINE_AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.PSMODELPIPELINE_AZURE_SUBSCRIPTION_ID }}
-
       - name: Login to Azure Container Registry
         run: |
           echo "${{ secrets.PSMODELPIPELINE_REGISTRY_PASSWORD }}" | docker login $ACR_LOGIN_SERVER \
             --username "${{ secrets.PSMODELPIPELINE_REGISTRY_USERNAME }}" \
             --password-stdin
-
       - name: Build Docker image
         run: |
           docker build \
             -t $ACR_LOGIN_SERVER/$IMAGE_NAME:${{ github.sha }} \
             -t $ACR_LOGIN_SERVER/$IMAGE_NAME:latest \
             .
-
       - name: Push Docker image
         run: |
           docker push $ACR_LOGIN_SERVER/$IMAGE_NAME:${{ github.sha }}
           docker push $ACR_LOGIN_SERVER/$IMAGE_NAME:latest
-
       - name: Deploy image to Azure Container App
         run: |
           az containerapp update \
             --name $CONTAINER_APP_NAME \
             --resource-group $RESOURCE_GROUP \
-            --image $ACR_LOGIN_SERVER/$IMAGE_NAME:${{ github.sha }}
-
+            --image $ACR_LOGIN_SERVER/$IMAGE_NAME:${{ github.sha }} \
+            --min-replicas 1 \
+            --max-replicas 1
       - name: Verify deployment
         run: |
           az containerapp show \

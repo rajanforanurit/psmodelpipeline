@@ -63,7 +63,7 @@ class PipelineOrchestrator:
                         result = await asyncio.to_thread(self._pdf_service.process, job)
                     else:
                         result = await asyncio.to_thread(self._json_service.process, job)
-                    self._change_detector.mark_processed(file)
+                    await asyncio.to_thread(self._change_detector.mark_processed, file)
                     return result
                 except Exception as exc:
                     last_error = exc
@@ -79,7 +79,7 @@ class PipelineOrchestrator:
 
             job.status = JobStatus.FAILED
             job.last_error = str(last_error)
-            self._failed_job_store.add(job)
+            await asyncio.to_thread(self._failed_job_store.add, job)
             return JobResult(
                 job_id=job.job_id,
                 file_id=job.file_id,
@@ -96,7 +96,12 @@ class PipelineOrchestrator:
             logger.error("drive_list_files_failed", error=str(exc))
             return {"error": str(exc)}
 
-        changed_files = self._change_detector.detect_changes(files)
+        try:
+            changed_files = await asyncio.to_thread(self._change_detector.detect_changes, files)
+        except Exception as exc:
+            logger.error("change_detection_failed", error=str(exc))
+            return {"error": str(exc)}
+
         logger.info("changed_files_detected", count=len(changed_files))
 
         jobs_and_files = []

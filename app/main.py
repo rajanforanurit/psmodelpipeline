@@ -177,9 +177,10 @@ async def metrics() -> dict:
 
     orchestrator: PipelineOrchestrator = app.state.orchestrator
     failed_store: FailedJobStore = orchestrator._failed_job_store
+    failed_jobs = await asyncio.to_thread(failed_store.list_all)
     return {
         "last_run": orchestrator.last_run_summary,
-        "failed_jobs": len(failed_store.list_all()),
+        "failed_jobs": len(failed_jobs),
     }
 
 
