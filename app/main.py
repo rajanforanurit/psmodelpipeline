@@ -2,7 +2,6 @@ import asyncio
 import time
 import traceback
 from contextlib import asynccontextmanager
-
 from fastapi import FastAPI, HTTPException
 
 from app.chunking.semantic_chunker import SemanticChunker
@@ -121,13 +120,20 @@ async def initialize_pipeline(app: FastAPI) -> None:
 
         scheduler = None
         if constants.SCHEDULER_ENABLED:
-            scheduler = PipelineScheduler(orchestrator, constants.SCHEDULER_INTERVAL_SECONDS)
+            scheduler = PipelineScheduler(
+                orchestrator,
+                constants.SCHEDULER_INTERVAL_SECONDS,
+            )
+
             scheduler.start()
+            await scheduler.run_initial_sync()
+
         app.state.scheduler = scheduler
 
         app.state.pipeline_ready = True
         app.state.pipeline_error = None
         logger.info("pipeline_ready")
+
     except Exception as exc:
         logger.error(
             "pipeline_initialization_failed",
@@ -136,8 +142,7 @@ async def initialize_pipeline(app: FastAPI) -> None:
         )
         app.state.pipeline_ready = False
         app.state.pipeline_error = str(exc)
-
-
+        
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("application_starting", version=constants.APP_VERSION)
