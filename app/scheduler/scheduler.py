@@ -1,8 +1,6 @@
 import asyncio
-
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
-
 from app.utils.logging_config import get_logger
 from app.workers.orchestrator import PipelineOrchestrator
 
@@ -33,7 +31,6 @@ class PipelineScheduler:
             id="drive_sync_job",
             max_instances=1,
             coalesce=True,
-            next_run_time=None,
         )
         self._scheduler.start()
         asyncio.create_task(self._run_guarded())
